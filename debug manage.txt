@@ -1,0 +1,46 @@
+function DEBUG_getMySubscriptions() {
+  const TEST_PHONE = "9818196079"; // 👈 put a real phone from SUBSCRIPTIONS
+
+  const phone = String(TEST_PHONE).replace(/\D/g, "");
+  const sh = sh_(TAB_SUBS);
+  const { idx } = headerIndex_(sh);
+  const rows = sh.getDataRange().getValues();
+
+  Logger.log("Phone searching for: " + phone);
+  Logger.log("Total rows in SUBSCRIPTIONS: " + (rows.length - 1));
+
+  let found = 0;
+
+  for (let r = 1; r < rows.length; r++) {
+    const rowPhone = String(rows[r][idx["Phone"]] || "").replace(/\D/g, "");
+
+    if (rowPhone === phone) {
+      found++;
+      Logger.log("MATCH @ row " + (r + 1));
+      Logger.log({
+        SubID: rows[r][idx["SubID"]],
+        OrderID: rows[r][idx["OrderID"]],
+        Service: rows[r][idx["Service"]],
+        Plan: rows[r][idx["Plan"]],
+        Status: rows[r][idx["Status"]],
+        StartDate: rows[r][idx["StartDate"]],
+        ExpiryDate: rows[r][idx["ExpiryDate"]]
+      });
+    }
+  }
+
+  Logger.log("TOTAL MATCHES FOUND: " + found);
+}
+
+
+function DEBUG_manageFetch() {
+  const r = getMySubscriptions("9818196079");
+  Logger.log(JSON.stringify(r, null, 2));
+  return r;
+}
+
+
+function TEST_manage(){
+  Logger.log(mg_getMySubscriptions_("9818196079"));
+}
+

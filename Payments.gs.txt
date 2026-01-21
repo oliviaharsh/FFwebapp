@@ -1,0 +1,280 @@
+/*************** FluxFilm Backend — Payments (UPDATED, SAFE) ***************/
+
+/**
+ * Verify payment for an orderId:
+ * - If already FULFILLED -> return fulfillOrder(orderId) (shows credentials again)
+ * - If MANUAL_PENDING -> return manual pending message (don’t try auto-fulfill)
+ * - If already PAID -> try fulfill again (shows credentials / retries fulfillment)
+ * - Else scan last N bank rows for a CREDIT tx containing orderId (FF-123 OR FF123) and matching amount
+ * - If match: mark PAID + write TxnRef + VerifiedAt
+ * - If coupon present: log in COUPON_USAGE with Action=USED (locks reuse)
+ * - Then call fulfillOrder(orderId)
+ *
+ * Phase-0 rules:
+ * - Exact amount match (rounded)
+ * - Only CREDIT tx
+ * - Must contain OrderID in RawLine or Reference (supports both dashed and no-dash forms)
+ *
+ * SAFE behavior:
+ * - NEVER throw / NEVER bad_() for bank scan problems while waiting
+ * - If not detected or temporary issue -> returns {found:false, retryAfterSec:15, message:"..."}
+ *   (Frontend will auto-poll every 15 sec for up to 3 minutes)
+ *
+ * HARDENED:
+ * - Never let missing headers crash (return ok/bad instead of throw)
+ * - Never let fulfillOrder() throw to frontend (safeFulfill_)
+ */
+function verifyPayment(orderId) {
+  // ---- Orders sheet safety ----
+  let orders, rowNum, idx, status, fulfillStatus;
+
+  try {
+    orders = sh_(TAB_ORDERS);
+    rowNum = getRowByValue_(orders, "OrderID", orderId);
+    if (!rowNum) return bad_("Order not found.");
+
+    ({ idx } = headerIndex_(orders));
+
+    // Required headers in ORDERS (avoid getRange crash)
+    const mustOrders = ["Status", "FulfillmentStatus", "FinalAmount", "Service", "Plan", "Phone", "CouponCode", "Discount"];
+    for (const h of mustOrders) {
+      if (idx[h] == null) return bad_(`ORDERS sheet missing header: ${h}`);
+    }
+
+    status = String(orders.getRange(rowNum, idx["Status"] + 1).getValue() || "").trim().toUpperCase();
+    fulfillStatus = String(orders.getRange(rowNum, idx["FulfillmentStatus"] + 1).getValue() || "").trim().toUpperCase();
+  } catch (e) {
+    // If orders access itself fails, fail cleanly (don’t throw to frontend)
+    return bad_("Order lookup failed: " + e);
+  }
+
+  // ✅ Always show credentials again if already fulfilled
+  if (fulfillStatus === FULFILL_STATUS.FULFILLED) {
+    return safeFulfill_(orderId);
+  }
+
+  // ✅ Manual orders (payment already verified earlier)
+  if (fulfillStatus === FULFILL_STATUS.MANUAL_PENDING) {
+    return ok_({
+      found: true,
+      fulfillment: "MANUAL_PENDING",
+      message: "✅ Payment received. Activation will be done manually.",
+      orderId: orderId
+    });
+  }
+
+  // ✅ If already PAID but not fulfilled, attempt fulfillment again
+  if (status === ORDER_STATUS.PAID) {
+    return safeFulfill_(orderId);
+  }
+
+  // ---- Read key fields (safe) ----
+  const finalAmount = asNumber_(orders.getRange(rowNum, idx["FinalAmount"] + 1).getValue());
+  const service = String(orders.getRange(rowNum, idx["Service"] + 1).getValue() || "").trim();
+  const plan = String(orders.getRange(rowNum, idx["Plan"] + 1).getValue() || "").trim();
+
+  // Support both formats:
+  // - old: FF-123456
+  // - new: FF123456
+  const oid = String(orderId || "").trim();
+  const oidNoDash = normalizeOrderId_(oid);
+
+  // ---- Bank Scan (SAFE) ----
+  let match = null;
+
+  try {
+    const bank = bankSh_();
+    const { idx: bIdx } = headerIndex_(bank);
+
+    const mustBank = ["Date", "Type", "Amount", "Reference", "RawLine"];
+    for (const h of mustBank) {
+      if (bIdx[h] == null) {
+        return ok_({
+          found: false,
+          retryAfterSec: 15,
+          message: `Bank sheet missing header: ${h}. Auto-checking every 15 seconds…`
+        });
+      }
+    }
+
+    const last = bank.getLastRow();
+    if (last < 2) {
+      return ok_({
+        found: false,
+        retryAfterSec: 15,
+        message: "Bank sheet has no transactions yet. Auto-checking every 15 seconds…"
+      });
+    }
+
+    // Read last N rows for speed (Phase-0)
+    const N = Number(getSetting_("PAYMENT_SCAN_ROWS", 250)) || 250;
+    const start = Math.max(2, last - N + 1);
+    const data = bank.getRange(start, 1, last - start + 1, bank.getLastColumn()).getValues();
+
+    for (let i = data.length - 1; i >= 0; i--) {
+      const r = data[i];
+
+      const type = String(r[bIdx["Type"]] || "").trim().toUpperCase();
+      if (type !== "CREDIT") continue;
+
+      const amt = asNumber_(r[bIdx["Amount"]]);
+      const raw = String(r[bIdx["RawLine"]] || "");
+      const ref = String(r[bIdx["Reference"]] || "");
+
+      const rawHit =
+        (oid && raw.includes(oid)) ||
+        (oidNoDash && raw.includes(oidNoDash)) ||
+        (oid && ref.includes(oid)) ||
+        (oidNoDash && ref.includes(oidNoDash));
+
+      if (!rawHit) continue;
+
+      // Amount check (exact in Phase-0)
+      if (finalAmount > 0 && Math.round(amt) !== Math.round(finalAmount)) continue;
+
+      match = {
+        date: r[bIdx["Date"]],
+        txnRef: String(r[bIdx["Reference"]] || "").trim(),
+        amount: amt,
+        rawLine: raw.slice(0, 250)
+      };
+      break;
+    }
+  } catch (e) {
+    // ✅ Any unexpected error: keep polling instead of failing
+    return ok_({
+      found: false,
+      retryAfterSec: 15,
+      message: "Temporary bank scan issue. Auto-checking every 15 seconds…"
+    });
+  }
+
+  // ✅ Not found yet: return retry signal (frontend will auto-check)
+  if (!match) {
+    return ok_({
+      found: false,
+      retryAfterSec: 15,
+      message: "Payment not detected yet. Please wait 1–2 minutes. Auto-checking every 15 seconds…"
+    });
+  }
+
+  // ---- Mark order PAID ----
+  try {
+    orders.getRange(rowNum, idx["Status"] + 1).setValue(ORDER_STATUS.PAID);
+    if (idx["TxnRef"] != null) orders.getRange(rowNum, idx["TxnRef"] + 1).setValue(match.txnRef);
+    if (idx["VerifiedAt"] != null) orders.getRange(rowNum, idx["VerifiedAt"] + 1).setValue(now_());
+  } catch (e) {
+    // If writing fails, keep polling (don’t crash UI)
+    return ok_({
+      found: false,
+      retryAfterSec: 15,
+      message: "Payment found but writing status failed. Auto-checking…"
+    });
+  }
+
+  // ---- Coupon: log USED ONLY after PAID (locks reuse) ----
+  try {
+    const couponCode = String(orders.getRange(rowNum, idx["CouponCode"] + 1).getValue() || "")
+      .trim()
+      .toUpperCase();
+
+    const discount = asNumber_(orders.getRange(rowNum, idx["Discount"] + 1).getValue());
+    const phone = String(orders.getRange(rowNum, idx["Phone"] + 1).getValue() || "").replace(/\D/g, "");
+    const email = String(orders.getRange(rowNum, idx["Email"] + 1).getValue() || "").trim();
+
+    if (couponCode && discount > 0) {
+      if (!couponAlreadyUsedForOrder_(couponCode, phone, orderId)) {
+        if (typeof markCouponUsedForOrder_ === "function") {
+          markCouponUsedForOrder_(couponCode, phone, email, discount, orderId);
+        } else if (typeof logCouponUse_ === "function") {
+          logCouponUse_(couponCode, phone, orderId, discount, "USED");
+        }
+      }
+    }
+  } catch (e) {
+    // ignore coupon issues, do not block fulfillment
+  }
+
+  // Telegram notify (if you have this function)
+  try {
+    if (typeof notifyTelegram_ === "function") {
+      notifyTelegram_("PAYMENT_VERIFIED", {
+        orderId: orderId,
+        service: service,
+        plan: plan,
+        amount: finalAmount,
+        txnRef: match.txnRef
+      });
+    }
+  } catch (e) {}
+
+  // Immediately fulfill (instant or manual) — SAFE WRAP
+  return safeFulfill_(orderId);
+}
+
+
+/**
+ * ✅ SAFE: Never let fulfillOrder() throw to frontend.
+ * If fulfillment is busy / throws / times out, return "found:false" so UI keeps polling for 3 minutes.
+ */
+function safeFulfill_(orderId) {
+  try {
+    return fulfillOrder(orderId);
+  } catch (e) {
+    return ok_({
+      found: false,
+      retryAfterSec: 15,
+      message: "Fulfillment is busy. Auto-checking every 15 seconds…"
+    });
+  }
+}
+
+
+/**
+ * Normalize orderId to support matching bank lines that may remove hyphen/spaces.
+ * FF-12345  -> FF12345
+ * FF 12345  -> FF12345
+ */
+function normalizeOrderId_(orderId) {
+  return String(orderId || "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
+}
+
+
+/**
+ * Prevent double-logging coupon USED for the same order.
+ * COUPON_USAGE columns:
+ *   A Timestamp
+ *   B Code
+ *   C Phone
+ *   D OrderID
+ *   E Discount
+ *   F Action
+ */
+function couponAlreadyUsedForOrder_(code, phone, orderId) {
+  try {
+    const ss = getCore_();
+    const sh = ss.getSheetByName("COUPON_USAGE");
+    if (!sh) return false;
+
+    const vals = sh.getDataRange().getValues();
+    code = String(code || "").toUpperCase();
+    phone = String(phone || "").replace(/\D/g, "");
+    orderId = String(orderId || "").trim();
+
+    for (let r = vals.length - 1; r >= 1; r--) {
+      const cCode = String(vals[r][1] || "").toUpperCase();
+      const cPhone = String(vals[r][2] || "").replace(/\D/g, "");
+      const cOrder = String(vals[r][3] || "").trim();
+      const action = String(vals[r][5] || "").toUpperCase();
+
+      if (cCode === code && cPhone === phone && cOrder === orderId && action === "USED") {
+        return true;
+      }
+    }
+    return false;
+  } catch (e) {
+    return false;
+  }
+}

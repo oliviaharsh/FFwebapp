@@ -1,0 +1,212 @@
+/*************** FluxFilm Backend — Manage / Renew (Manage.gs) ***************/
+/**
+ * Phone-only Manage/Renew (NO RATE LIMIT)
+ * Returns shape expected by index:
+ *   { ok:true, phone, actionable:[], history:[], infoBanner:"" }
+ * or { ok:false, message:"" }
+ *
+ * Uses sheet: "SUBSCRIPTIONS" from CORE sheet via sh_()
+ */
+
+// Public function called by frontend
+function getMySubscriptions(phone){
+  return mg_getMySubscriptions_(phone);
+}
+
+// Internal (unique name to avoid global collisions)
+function mg_getMySubscriptions_(phone) {
+  try {
+    const ph = mg_normalizePhone_(phone);
+    if (!ph) return { ok: false, message: "Phone is required." };
+
+    // Use CORE sheet helper (from Utils.gs)
+    const subs = sh_("SUBSCRIPTIONS");
+
+    const idx = mg_headerIndex_(subs);
+
+    const required = ["SubID","OrderID","Phone","Email","Service","Plan","ExpiryDate","InventoryRef"];
+    for (var i = 0; i < required.length; i++) {
+      var h = required[i];
+      if (idx[h] == null) {
+        return { ok: false, message: "SUBSCRIPTIONS missing header: " + h };
+      }
+    }
+
+    const last = subs.getLastRow();
+    if (last < 2) {
+      return {
+        ok: true,
+        phone: ph,
+        infoBanner: "📱 Please enter the same phone number you used to buy subscriptions.",
+        actionable: [],
+        history: []
+      };
+    }
+
+    const data = subs.getRange(2, 1, last - 1, subs.getLastColumn()).getValues();
+    const nowMs = Date.now();
+
+    const all = [];
+
+    for (var r = 0; r < data.length; r++) {
+      var row = data[r];
+
+      var rowPhone = mg_normalizePhone_(row[idx["Phone"]]);
+      if (rowPhone !== ph) continue;
+
+      var svc = String(row[idx["Service"]] || "").trim();
+      var plan = String(row[idx["Plan"]] || "").trim();
+      var email = String(row[idx["Email"]] || "").trim();
+
+      var expRaw = row[idx["ExpiryDate"]];
+      var expDate = mg_parseDate_(expRaw);
+      var expMs = expDate ? expDate.getTime() : NaN;
+
+      var daysLeft = isNaN(expMs) ? null : Math.ceil((expMs - nowMs) / 86400000);
+
+      var elig = mg_renewEligibility_(daysLeft);
+      var mood = mg_expiryMood_(daysLeft);
+
+      all.push({
+        subId: String(row[idx["SubID"]] || "").trim(),
+        orderId: String(row[idx["OrderID"]] || "").trim(),
+        service: svc,
+        plan: plan,
+        maskedEmail: mg_maskEmailFirst4_(email),
+        expiryDate: expRaw || "",
+        daysLeft: daysLeft,
+        moodEmoji: mood.emoji,
+        moodText: mood.text,
+        renewEligibility: elig,
+        uiTone: (elig === "CAN_RENEW") ? "normal" : (elig === "LATE_RENEW" ? "faded_red" : "faded_grey"),
+        showRenewButton: (elig !== "TOO_LATE"),
+        inventoryRef: String(row[idx["InventoryRef"]] || "").trim()
+      });
+    }
+
+    var actionable = [];
+    var tooLate = [];
+
+    for (var j = 0; j < all.length; j++) {
+      if (all[j].renewEligibility === "TOO_LATE") tooLate.push(all[j]);
+      else actionable.push(all[j]);
+    }
+
+    // Soonest expiry first
+    actionable.sort(function(a, b){
+      var ax = mg_parseDate_(a.expiryDate);
+      var bx = mg_parseDate_(b.expiryDate);
+      return (ax ? ax.getTime() : 9e15) - (bx ? bx.getTime() : 9e15);
+    });
+
+    // Most recent expired first
+    tooLate.sort(function(a, b){
+      var ax = mg_parseDate_(a.expiryDate);
+      var bx = mg_parseDate_(b.expiryDate);
+      return (bx ? bx.getTime() : 0) - (ax ? ax.getTime() : 0);
+    });
+
+    return {
+      ok: true,
+      phone: ph,
+      infoBanner: "📱 Please enter the same phone number you used to buy subscriptions.",
+      actionable: actionable,
+      history: tooLate.slice(0, 3)
+    };
+
+  } catch (e) {
+    return {
+      ok: false,
+      message: "Manage error: " + (e && e.message ? e.message : e)
+    };
+  }
+}
+
+/* -------------------- Helpers (unique mg_* names) -------------------- */
+
+function mg_headerIndex_(sheet) {
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  var idx = {};
+  for (var c = 0; c < headers.length; c++) {
+    var h = String(headers[c] || "").trim();
+    if (h) idx[h] = c;
+  }
+  return idx;
+}
+
+function mg_renewEligibility_(daysLeft) {
+  if (daysLeft == null) return "TOO_LATE";
+  if (daysLeft >= 0) return "CAN_RENEW";
+  if (daysLeft >= -5) return "LATE_RENEW";
+  return "TOO_LATE";
+}
+
+function mg_expiryMood_(daysLeft) {
+  if (daysLeft == null) return { emoji: "❓", text: "Expiry unknown" };
+  if (daysLeft > 10) return { emoji: "😄", text: "Safe" };
+  if (daysLeft >= 6) return { emoji: "🙂", text: "All good" };
+  if (daysLeft >= 1) return { emoji: "😰", text: "Expiring soon" };
+  if (daysLeft === 0) return { emoji: "⚠️", text: "Expires today" };
+  if (daysLeft >= -5) return { emoji: "😵", text: "Expired (late renew allowed)" };
+  return { emoji: "🟥", text: "Expired" };
+}
+
+function mg_normalizePhone_(p) {
+  var s = String(p || "").replace(/\D/g, "");
+  if (!s) return "";
+  if (s.length > 10) s = s.slice(-10);
+  return s;
+}
+
+function mg_maskEmailFirst4_(email) {
+  var e = String(email || "").trim();
+  var at = e.indexOf("@");
+  if (at < 0) return e ? (e.slice(0, 4) + "****") : "";
+  var local = e.slice(0, at);
+  var domain = e.slice(at);
+  var head = local.slice(0, 4);
+  return head + "****" + domain;
+}
+
+function mg_parseDate_(x) {
+  if (!x) return null;
+  if (x instanceof Date && !isNaN(x.getTime())) return x;
+
+  var s = String(x).trim();
+
+  // DD/MM/YYYY HH:mm:ss
+  var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (m) {
+    return new Date(
+      Number(m[3]),
+      Number(m[2]) - 1,
+      Number(m[1]),
+      Number(m[4] || 0),
+      Number(m[5] || 0),
+      Number(m[6] || 0)
+    );
+  }
+
+  var d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+
+
+
+function DEBUG_manage(phone) {
+  try {
+    return {
+      ok: true,
+      input: phone,
+      normalized: mg_normalizePhone_(phone),
+      hasSh: (typeof sh_ === "function"),
+      hasCoreId: (typeof CORE_SS_ID !== "undefined"),
+      subsSheetExists: !!sh_("SUBSCRIPTIONS"),
+      result: mg_getMySubscriptions_(phone)
+    };
+  } catch (e) {
+    return { ok: false, message: String(e && e.message ? e.message : e) };
+  }
+}
+

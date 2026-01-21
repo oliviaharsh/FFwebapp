@@ -1,0 +1,391 @@
+Here is a clean, structured, future-proof summary you can paste into a new chat and continue instantly without losing context.
+
+🌐 FLUXFILM WEBSITE — COMPLETE SUMMARY & CURRENT STATUS
+🧠 WHAT FLUXFILM IS
+
+FluxFilm is a self-serve, app-like subscription platform where users can:
+
+Buy subscriptions
+
+Renew early (with discounts)
+
+Recover access
+
+Resume payment
+
+Get instant credentials (or manual activation where required)
+
+❌ No WhatsApp dependency
+❌ No login required (optional later)
+❌ No waiting for admin
+✅ Fully automated
+✅ Google Sheets driven
+✅ Mobile-first SPA
+
+🏗️ TECH STACK (CURRENT)
+Phase-0 (LIVE / BUILDING)
+
+Frontend + Backend: Google Apps Script Web App (HTMLService)
+
+Database: Google Sheets (FluxFilm_Core)
+
+Architecture: Single-Page App (SPA)
+
+Navigation: Slide animations, back button
+
+Security: OTP + deterministic payment note matching
+
+Payments: UPI with OrderID note verification
+
+Emails: Google Workspace email (support@fluxfilm.in
+)
+
+Phase-1 (Later)
+
+Frontend moved to Firebase / custom domain
+
+Backend remains Apps Script forever
+
+🏠 HOME PAGE (ENTRY)
+
+No login / signup
+
+Primary buttons:
+
+🟢 Buy New Subscription
+
+🔁 Manage / Renew
+
+🔐 Recover Access
+
+🤖 Ask Fluxy AI
+
+❓ Help Center
+
+💬 WhatsApp Support (last resort)
+
+🟢 BUY FLOW (WORKING)
+Step 1: Choose Service
+
+Netflix
+
+Netflix Group
+
+Prime Video
+
+Crunchyroll
+
+YouTube Premium (manual)
+
+Step 2: Choose Plan
+
+Plans are fully sheet-driven from PLANS sheet.
+
+Each plan supports:
+
+Duration
+
+Price
+
+Fulfillment mode (INSTANT / MANUAL)
+
+Allocation policy (PROFILE / ACCOUNT / CAPACITY / NONE)
+
+Extra fields (Prime device type, YT email, etc.)
+
+Group join requirement (Netflix Group)
+
+Early renewal discount
+
+Device rules
+
+🔥 NEW: Benefits & Badge
+
+⭐ PLAN BENEFITS SYSTEM (JUST ADDED)
+Sheet: PLANS
+
+New columns:
+
+Benefits → multiline benefits (1 per line)
+
+BadgeText → e.g. Most Popular, Best Value
+
+Example:
+
+Benefits:
+Login up to 2 devices
+Watch on 1 device at a time
+4K Ultra HD
+Ads-free
+Mobile / Laptop / TV
+
+BadgeText:
+Most Popular
+
+UI behavior:
+
+Shows first 2 benefits
+
+“Show more” expands
+
+Badge glow for popular plans
+
+Clean, app-like cards
+
+💳 PAYMENT FLOW (WORKING)
+
+Unique OrderID auto-generated (FF-XXXXX)
+
+UPI link + QR generated
+
+Big highlighted payment note
+
+Copy buttons everywhere
+
+“I’ve Paid → Verify” button
+
+Spinner while checking bank entries
+
+If verified:
+
+Credentials shown
+
+Email sent
+
+If not:
+
+Retry logic
+
+QR fixed using api.qrserver.com (Google Charts removed).
+
+🔁 RESUME PAYMENT (PLANNED — IMPORTANT)
+
+❌ No OrderID memory required
+
+Two-layer system:
+
+localStorage resume
+
+If user closes phone → reopening resumes payment automatically
+
+Phone-based recovery
+
+User enters phone
+
+Backend fetches latest CREATED / PAID order
+
+Payment page rebuilt
+
+👉 Customers never need to remember OrderID.
+
+🎟️ COUPON SYSTEM (PLANNED)
+Controlled entirely via Sheets
+Sheet: COUPONS
+
+Supports:
+
+Flat or % discount
+
+Min amount
+
+Max discount cap
+
+Expiry
+
+Active toggle
+
+Scope:
+
+NEW
+
+RENEW
+
+ANY
+
+First-time only (phone-based)
+
+Per-user limit
+
+Global limit
+
+Service / Plan restriction
+
+Sheet: COUPON_USAGE
+
+Tracks usage per phone
+
+Prevents reuse
+
+Rules decided:
+
+Phone number only (no email)
+
+First-time = no PAID order with that phone (for testing)
+
+Coupons validated before order creation
+
+Applied discount stored in ORDERS
+
+🔁 MANAGE / RENEW FLOW (WORKING)
+
+User enters phone (+ optional email)
+
+Active subscriptions shown as cards
+
+Each card shows:
+
+Service + Plan
+
+Purchase date
+
+Expiry date
+
+Days left
+
+Status badge:
+
+Active
+
+Expiring Soon (≤7 days)
+
+Expired
+
+Buttons:
+
+Renew Early (discount pulled from sheet)
+
+Renew Now
+
+🔐 RECOVER ACCESS (WORKING / EXTENDING)
+
+Phone + email
+
+OTP verification
+
+Only ACTIVE subscriptions shown
+
+Recover credentials
+
+Email resent automatically
+
+📺 SERVICE-SPECIFIC LOGIC (IMPLEMENTED)
+Netflix
+
+Sharing plan:
+
+Must use FluxFilm profile
+
+PIN provided
+
+Private plan:
+
+Assigned profile 2, 3, 4…
+
+Profile reuse after expiry + 10 days
+
+Group plan:
+
+Must join WhatsApp group
+
+Warning shown
+
+Admin can suspend manually via sheet
+
+Prime Video
+
+Per account:
+
+Max 4 devices total
+
+Max 2 TVs
+
+Extra field:
+
+TV / Mobile / Laptop
+
+Allocation via capacity logic
+
+YouTube Premium
+
+Manual activation
+
+Extra field: Gmail
+
+Admin changes FulfillmentStatus from PENDING → COMPLETED
+
+Crunchyroll
+
+Instant ID/password
+
+1 device per plan
+
+📄 ADMIN / BACKEND PRINCIPLES
+
+No admin dashboard shown to customers
+
+Admin control via:
+
+Sheets
+
+Telegram alerts (planned)
+
+Admin changes:
+
+FulfillmentStatus
+
+Status
+
+Expiry
+
+Notes (reason for suspension)
+
+🧩 OPTIONAL / FUTURE (PHASE-2)
+
+(Discussed but intentionally postponed)
+
+Optional login (phone + OTP to email)
+
+Points / rewards system (sheet-controlled)
+
+Games:
+
+Spin wheel
+
+Scratch card
+
+Mystery box
+
+Points not directly equal to money
+
+Rewards mostly coupons / free days
+
+🔥 CURRENT STATUS
+
+✅ First real customer purchase done
+✅ YouTube manual fulfillment tested
+✅ Payment, QR, OrderID, email all working
+✅ Benefits & badges structure added
+⏳ Coupons + Resume payment next (combined patch)
+
+▶️ WHAT WE ARE DOING NEXT (VERY CLEAR)
+
+Next combined implementation step:
+
+🎟️ Coupon engine (phone-only, first-time rule)
+
+🔁 Resume payment without OrderID
+
+⭐ Render Benefits + Badge in UI (you already added columns)
+
+👉 No jumping to games / points yet
+👉 Finish core commerce loop first
+
+ONE-LINE SUMMARY
+
+FluxFilm is a fully automated, sheet-driven, mobile-app-like platform where users can buy, pay, resume, renew, and recover subscriptions instantly — without login, without WhatsApp, and without waiting.
+
+When you open the new chat, paste this and say:
+
+“Continue from coupons + resume payment implementation”
+
+I’ll pick up exactly from here 🚀

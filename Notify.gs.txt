@@ -1,0 +1,33 @@
+/*************** FluxFilm Backend — Telegram Notify ***************/
+
+function notifyTelegram_(eventType, payload) {
+  const token = String(getSetting_("TELEGRAM_BOT_TOKEN","")).trim();
+  const chatId = String(getSetting_("TELEGRAM_CHAT_ID","")).trim();
+  if(!token || !chatId || token.includes("PASTE_") || chatId.includes("PASTE_")) return;
+
+  const p = payload || {};
+  const msg =
+    `🍿 FluxFilm Update\n` +
+    `Event: ${eventType}\n` +
+    `Order: ${p.orderId || "-"}\n` +
+    `Service: ${p.service || "-"}\n` +
+    `Plan: ${p.plan || "-"}\n` +
+    (p.amount!=null ? `Amount: ₹${Math.round(p.amount)}\n` : "") +
+    (p.txnRef ? `TxnRef: ${p.txnRef}\n` : "") +
+    (p.inv ? `Inv: ${p.inv}\n` : "") +
+    (p.email ? `Email: ${maskEmail_(p.email)}\n` : "") +
+    (p.phone ? `Phone: ${maskPhone_(p.phone)}\n` : "");
+
+  const url = `https://api.telegram.org/bot${token}/sendMessage`;
+  const options = {
+    method: "post",
+    contentType: "application/json",
+    payload: JSON.stringify({ chat_id: chatId, text: msg })
+  };
+
+  try {
+    UrlFetchApp.fetch(url, options);
+  } catch (e) {
+    // silently ignore to avoid breaking purchase flow
+  }
+}

@@ -1,0 +1,2076 @@
+<!doctype html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>FluxFilm</title>
+
+  <style>
+    :root{
+      --bg:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:rgba(15,23,42,.10);
+      --shadow:0 14px 40px rgba(15,23,42,.10);
+      --chip:#f1f5f9;
+      --green:#16a34a;
+      --green2:#22c55e;
+      --blue:#2563eb;
+      --red:#ef4444;
+      --amber:#f59e0b;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      overflow-x:hidden;
+    }
+
+    .badgeGlow{
+      display:inline-flex;
+      margin-top:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:950;
+      border:1px solid rgba(245,158,11,.35);
+      background: rgba(245,158,11,.12);
+      color:#7c2d12;
+      box-shadow: 0 0 0 4px rgba(245,158,11,.08);
+    }
+
+    .benefits{
+      margin-top:8px;
+      color: var(--muted);
+      font-weight:800;
+      font-size:12.5px;
+      line-height:1.35;
+    }
+
+    .chip{
+      display:inline-flex;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      cursor:pointer;
+      user-select:none;
+      font-weight:900;
+      font-size:12px;
+    }
+
+    .app{min-height:100vh; display:flex; justify-content:center; padding:16px 14px 90px;}
+    .wrap{width:min(520px,100%);}
+
+    .topbar{
+      display:flex; align-items:center; gap:12px;
+      padding:10px 2px 12px;
+      position:sticky; top:0;
+      background:linear-gradient(to bottom, rgba(255,255,255,.98), rgba(255,255,255,.92));
+      backdrop-filter: blur(10px);
+      z-index:10;
+    }
+    .logo{
+      width:46px;height:46px;border-radius:16px;
+      display:grid;place-items:center;
+      background: radial-gradient(circle at 30% 30%, #34d399, #16a34a);
+      color:#fff; box-shadow:var(--shadow);
+      font-size:22px;
+      flex:0 0 auto;
+      cursor:pointer;
+      user-select:none;
+    }
+    .titleBlock{
+      flex:1; min-width:0;
+      cursor:pointer;
+      user-select:none;
+    }
+    .title{margin:0; font-size:18px; font-weight:900; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .subtitle{margin:4px 0 0; font-size:12.5px; color:var(--muted); line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      background:var(--chip);
+      border:1px solid var(--border);
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+    .backBtn{
+      display:none;
+      width:40px;height:40px;border-radius:14px;
+      border:1px solid var(--border);
+      background:#fff;
+      box-shadow:0 10px 26px rgba(15,23,42,.06);
+      cursor:pointer;
+      align-items:center;
+      justify-content:center;
+      font-weight:900;
+    }
+
+    .card{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      padding:14px;
+      margin:12px 0;
+      overflow:hidden;
+    }
+    .card h3{margin:0 0 8px; font-size:16px; font-weight:900; display:flex; align-items:center; gap:8px;}
+    .card p{margin:0 0 12px; color:var(--muted); font-size:13px; line-height:1.35;}
+
+    .card.hasBg{ position:relative; overflow:hidden; }
+    .card.hasBg::before{
+      content:"";
+      position:absolute; inset:0;
+      background-image: var(--card-bg);
+      background-size: cover;
+      background-position: center;
+      opacity:.22;
+      transform: scale(1.03);
+    }
+    .card.hasBg::after{
+      content:"";
+      position:absolute; inset:0;
+      background: linear-gradient(to bottom, rgba(255,255,255,.92), rgba(255,255,255,.98));
+    }
+    .card.hasBg > *{ position:relative; z-index:1; }
+
+    .row{display:flex; gap:10px; flex-wrap:wrap;}
+    .btn{
+      border:none;
+      border-radius:16px;
+      padding:12px 14px;
+      font-weight:900;
+      font-size:14px;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      transition:.12s transform ease;
+      user-select:none;
+    }
+    .btn:active{transform:scale(.99)}
+    .btnPrimary{
+      background:linear-gradient(135deg,var(--green),var(--green2));
+      color:#fff;
+      box-shadow:0 12px 26px rgba(34,197,94,.22);
+      flex:1;
+    }
+    .btnGhost{
+      background:#fff;
+      color:var(--text);
+      border:1px solid var(--border);
+      flex:1;
+    }
+    .btnBlue{
+      background:linear-gradient(135deg,#2563eb,#60a5fa);
+      color:#fff;
+      flex:1;
+    }
+    .btnRed{
+      background:linear-gradient(135deg,#ef4444,#fb7185);
+      color:#fff;
+      flex:1;
+    }
+
+    label{display:block; font-size:12px; color:var(--muted); margin:0 0 6px; font-weight:800;}
+    input,select,textarea{
+      width:100%;
+      padding:12px 12px;
+      border-radius:16px;
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--text);
+      outline:none;
+      font-size:14px;
+    }
+    textarea{min-height:80px; resize:vertical;}
+    input:focus,select:focus,textarea:focus{
+      border-color: rgba(37,99,235,.35);
+      box-shadow: 0 0 0 4px rgba(37,99,235,.10);
+    }
+    .grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+    @media(max-width:420px){ .grid{grid-template-columns:1fr;} }
+
+    .chip{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 12px;
+      border-radius:999px;
+      background:var(--chip);
+      border:1px solid var(--border);
+      font-size:13px;
+      font-weight:900;
+      cursor:pointer;
+      user-select:none;
+    }
+    .chip.on{
+      background: rgba(34,197,94,.10);
+      border-color: rgba(34,197,94,.35);
+      color:#0f5132;
+    }
+
+    .serviceList{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+    @media(max-width:420px){ .serviceList{grid-template-columns:1fr;} }
+
+    .svc{
+      padding:14px;
+      border-radius:20px;
+      border:1px solid var(--border);
+      background:#fff;
+      box-shadow:0 12px 26px rgba(15,23,42,.06);
+      cursor:pointer;
+      font-weight:900;
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+    }
+    .svc small{display:block; font-weight:800; color:var(--muted); margin-top:2px;}
+    .badge{
+      font-size:12px;
+      font-weight:900;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:#fff;
+      white-space:nowrap;
+    }
+    .badge.instant{background: rgba(34,197,94,.10); border-color: rgba(34,197,94,.25); color:#0f5132;}
+    .badge.manual{background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.30); color:#7c2d12;}
+
+    .planGrid{display:grid; grid-template-columns:1fr; gap:10px;}
+    .planCard{
+      padding:14px;
+      border-radius:20px;
+      border:1px solid var(--border);
+      background:#fff;
+      box-shadow:0 12px 26px rgba(15,23,42,.06);
+      cursor:pointer;
+      display:flex; justify-content:space-between; align-items:flex-start; gap:12px;
+    }
+    .planCard b{font-size:14px;}
+    .planCard small{display:block; margin-top:3px; color:var(--muted); font-weight:800; font-size:12.5px;}
+    .price{font-weight:950; font-size:15px;}
+
+    .svcLeft{display:flex; align-items:center; gap:10px; min-width:0;}
+    .svcLogo{
+      width:34px; height:34px;
+      border-radius:12px;
+      object-fit:cover;
+      border:1px solid var(--border);
+      background:#fff;
+      flex:0 0 auto;
+    }
+    .svcText{min-width:0;}
+    .planLeft{display:flex; gap:10px; align-items:flex-start; min-width:0; flex:1;}
+    .planText{min-width:0; flex:1;}
+
+    .hint{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:16px;
+      border:1px dashed rgba(15,23,42,.20);
+      background:#fcfcfd;
+      color:var(--muted);
+      font-size:12.5px;
+      line-height:1.35;
+    }
+    /* Important Info (Post Payment Message) */
+    .infoBox{
+      margin-top:10px;
+      padding:14px 14px;
+      border-radius:18px;
+      background:#fff7ed;
+      border:1px solid #fed7aa;
+      box-shadow: 0 0 0 4px rgba(245,158,11,.10);
+      color:#7c2d12;
+    }
+    .infoBox .infoTitle{
+      font-weight:1000;
+      color:#9a3412;
+      margin-bottom:8px;
+    }
+    .infoBox ul{
+      margin:0;
+      padding-left:18px;
+    }
+    .infoBox li{
+      margin:6px 0;
+      font-size:13.5px;
+      font-weight:900;
+    }
+
+    .kv{display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center; padding:10px 0; border-top:1px solid var(--border);}
+    .kv:first-child{border-top:none}
+    .k{font-size:12px; color:var(--muted); font-weight:900;}
+    .v{font-size:14px; font-weight:950; word-break:break-word;}
+    .copy{padding:10px 12px; border-radius:14px; border:1px solid var(--border); background:#fff; cursor:pointer; font-weight:950;}
+
+    /* ---------------- Manage / Renew UI ---------------- */
+    .manageHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .manageBadge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      background: rgba(37,99,235,.08);
+      border:1px solid rgba(37,99,235,.18);
+      color:#1e40af;
+      font-size:12px;
+      font-weight:950;
+      white-space:nowrap;
+    }
+
+    .subCard{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:22px;
+      box-shadow:0 12px 26px rgba(15,23,42,.06);
+      padding:14px;
+      margin:12px 0;
+    }
+
+    .subCardTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .subTitle{
+      font-size:16px;
+      font-weight:1000;
+      margin:0;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .subPlan{
+      margin-top:3px;
+      color:var(--muted);
+      font-size:13px;
+      font-weight:900;
+    }
+
+    .subMeta{
+      margin-top:10px;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    @media(max-width:420px){
+      .subMeta{ grid-template-columns:1fr; }
+    }
+
+    .metaBox{
+      padding:10px 12px;
+      border-radius:16px;
+      border:1px solid var(--border);
+      background:#fff;
+    }
+    .metaK{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:950;
+    }
+    .metaV{
+      margin-top:2px;
+      font-size:14px;
+      font-weight:1000;
+    }
+
+    .moodPill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      background: rgba(34,197,94,.10);
+      border:1px solid rgba(34,197,94,.25);
+      color:#0f5132;
+      font-size:12px;
+      font-weight:1000;
+      white-space:nowrap;
+    }
+    .moodWarn{
+      background: rgba(245,158,11,.12);
+      border-color: rgba(245,158,11,.30);
+      color:#7c2d12;
+    }
+    .moodBad{
+      background: rgba(239,68,68,.10);
+      border-color: rgba(239,68,68,.25);
+      color:#7f1d1d;
+    }
+
+    .subCard.fadedRed{
+      border-color: rgba(239,68,68,.25);
+      background: linear-gradient(to bottom, rgba(239,68,68,.05), #fff);
+      opacity:.92;
+    }
+    .subCard.fadedGrey{
+      opacity:.62;
+      filter: grayscale(.20);
+    }
+
+    .smallNote{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:16px;
+      background:#fcfcfd;
+      border:1px dashed rgba(15,23,42,.20);
+      color:var(--muted);
+      font-size:12.5px;
+      font-weight:900;
+      line-height:1.35;
+    }
+
+    .overlay{
+      position:fixed; inset:0;
+      background: rgba(255,255,255,.75);
+      backdrop-filter: blur(8px);
+      display:none;
+      align-items:center; justify-content:center;
+      padding:18px;
+      z-index:50;
+    }
+    .overlay.show{display:flex;}
+    .loaderCard{
+      width:min(420px, 100%);
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      padding:16px;
+      text-align:center;
+    }
+    .spinner{
+      width:40px;height:40px; border-radius:50%;
+      border:4px solid rgba(15,23,42,.10);
+      border-top-color: rgba(34,197,94,.95);
+      margin:0 auto 10px;
+      animation:spin .9s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loadTitle{font-weight:950; font-size:15px; margin:0}
+    .loadSub{margin:6px 0 0; color:var(--muted); font-size:13px}
+
+    .stage{position:relative; min-height:60vh;}
+    .screen{
+      position:absolute; inset:0;
+      transform: translateX(110%);
+      opacity:0;
+      transition: transform .22s ease, opacity .22s ease;
+      will-change: transform, opacity;
+    }
+    .screen.active{
+      transform: translateX(0);
+      opacity:1;
+      position:relative;
+    }
+    .screen.left{transform: translateX(-110%); opacity:0;}
+
+    .wa{
+      position:fixed;
+      left:50%;
+      transform:translateX(-50%);
+      bottom:14px;
+      width:min(520px, calc(100% - 28px));
+      z-index:20;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-hidden="true" tabindex="-1">
+    <div class="loaderCard" role="status" aria-live="polite">
+      <div class="spinner" aria-hidden="true"></div>
+      <p class="loadTitle" id="loadTitle">⏳ Loading…</p>
+      <p class="loadSub" id="loadSub">Please wait</p>
+    </div>
+  </div>
+
+  <div class="app">
+    <div class="wrap">
+
+      <div class="topbar">
+        <button class="backBtn" id="backBtn" onclick="goBack()" aria-label="Go back">←</button>
+
+        <div class="logo" onclick="nav('scrHome', true)" role="button" aria-label="Home">🍿</div>
+
+        <div class="titleBlock" onclick="nav('scrHome', true)" role="button" aria-label="FluxFilm home">
+          <p class="title" id="topTitle">FluxFilm</p>
+          <p class="subtitle" id="topSub">Self-serve subscriptions • Instant access ✅</p>
+        </div>
+
+        <div class="pill" id="statusPill" role="status" aria-live="polite">⏳ Sync…</div>
+      </div>
+
+      <div class="stage" id="stage">
+
+        <!-- HOME -->
+        <div class="screen active" id="scrHome">
+          <div class="card">
+            <h3>🏠 Welcome</h3>
+            <p>Buy, renew, recover access — without login, without waiting.</p>
+
+            <div class="row">
+              <button class="btn btnPrimary" onclick="nav('scrBuy1', true)">🟢 Buy New Subscription</button>
+              <button class="btn btnGhost" onclick="openManage()">🔁 Manage / Renew</button>
+              <button class="btn btnGhost" onclick="comingSoon('Recover Access (OTP)')">🔐 Recover Access</button>
+              <button class="btn btnGhost" onclick="comingSoon('Fluxy AI Help')">🤖 Ask Fluxy AI</button>
+              <button class="btn btnBlue" id="btnResume" style="display:none;" onclick="resumePayment()">🔁 Resume Payment</button>
+            </div>
+
+            <div class="hint" id="resumeHint" style="display:none;"></div>
+          </div>
+
+          <div class="card">
+            <h3>✅ Why FluxFilm?</h3>
+            <p>
+              ✅ WhatsApp Verified / Blue Tick<br>
+              ⚡ Instant delivery after verification<br>
+              🔒 OTP-based recovery (coming next)<br>
+              💸 Cheaper than official plans<br>
+              📧 Email confirmation always
+            </p>
+          </div>
+
+          <div class="card">
+            <h3>❓ Help Center</h3>
+            <p>Payment note, renewals, recovery, and troubleshooting (coming next).</p>
+            <button class="btn btnGhost" onclick="comingSoon('Help Center')">Open FAQs</button>
+          </div>
+        </div>
+
+        <!-- MANAGE / RENEW -->
+        <div class="screen" id="scrManage">
+          <div class="card">
+            <div class="manageHeader">
+              <div>
+                <h3 style="margin:0;">🔁 Manage / Renew</h3>
+                <p style="margin:6px 0 0; color:var(--muted); font-size:13px; font-weight:900;">
+                  📱 Please enter the same phone number you used to buy subscriptions.
+                </p>
+              </div>
+              <span class="manageBadge">No login • Fast</span>
+            </div>
+
+            <div style="margin-top:12px;">
+              <label for="mgPhone">Phone Number</label>
+              <input id="mgPhone" type="tel" inputmode="tel" placeholder="Enter your phone (10 digits)" />
+            </div>
+
+            <div class="row" style="margin-top:12px;">
+              <button class="btn btnPrimary" onclick="loadMySubs()">✅ Continue</button>
+              <button class="btn btnGhost" onclick="nav('scrHome', true)">🏠 Home</button>
+            </div>
+
+            <div class="smallNote" style="margin-top:12px;">
+              🔒 For privacy, email is masked. Manage/Renew does not show full credentials.
+            </div>
+          </div>
+
+          <div class="card" id="mgResultsCard" style="display:none;">
+            <h3 style="margin:0 0 8px;">🎬 Your Subscriptions</h3>
+            <p id="mgSummary" style="margin:0 0 12px; color:var(--muted); font-size:13px; font-weight:900;">-</p>
+
+            <div id="mgActionable"></div>
+
+            <div id="mgHistoryWrap" style="display:none; margin-top:14px;">
+              <h3 style="margin:0 0 8px;">🕓 Past Expired (last 3)</h3>
+              <div id="mgHistory"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BUY 1: Select Service -->
+        <div class="screen" id="scrBuy1">
+          <div class="card" id="cardBuy1">
+            <h3>🎬 Choose a Service</h3>
+            <p>Select your subscription service.</p>
+            <div class="serviceList" id="serviceList"></div>
+          </div>
+        </div>
+
+        <!-- BUY 2: Select Plan -->
+        <div class="screen" id="scrBuy2">
+          <div class="card" id="cardBuy2">
+            <h3>💳 Choose a Plan</h3>
+            <p id="planSub">Select plan for your service.</p>
+            <div class="planGrid" id="planGrid"></div>
+          </div>
+        </div>
+
+        <!-- GROUP JOIN GATE -->
+        <div class="screen" id="scrGroup">
+          <div class="card" id="cardGroup">
+            <h3>👥 Join Group First</h3>
+            <p>This plan requires you to join the group before purchase.</p>
+
+            <div class="hint" id="groupHint"></div>
+
+            <div class="row" style="margin-top:12px;">
+              <button class="btn btnBlue" onclick="openGroup()">🔗 Open Group Link</button>
+              <button class="btn btnPrimary" onclick="confirmGroupJoined()">✅ I Joined</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- BUY 3: Details -->
+        <div class="screen" id="scrDetails">
+          <div class="card" id="cardDetails">
+            <h3>🧾 Your Details</h3>
+            <p>We'll send confirmation on email. No login needed.</p>
+
+            <div class="grid">
+              <div>
+                <label for="inEmail">Email 📧</label>
+                <input id="inEmail" type="email" placeholder="you@gmail.com" required />
+              </div>
+              <div>
+                <label for="inPhone">Phone 📱</label>
+                <input id="inPhone" type="tel" inputmode="tel" pattern="[0-9+ -]{7,20}" placeholder="+91XXXXXXXXXX" required />
+              </div>
+              <div>
+                <label for="inCoupon">Coupon (optional) 🎟️</label>
+                <input id="inCoupon" placeholder="FLUX10" />
+              </div>
+              <div>
+                <label for="inNotes">Notes (optional) ✍️</label>
+                <input id="inNotes" placeholder="Affiliate ID / Message / etc." />
+              </div>
+            </div>
+
+            <div class="row" style="margin-top:10px;">
+              <button class="btn btnBlue" onclick="applyCoupon()">🎟️ Apply Coupon</button>
+              <button class="btn btnGhost" onclick="removeCoupon()">❌ Remove Coupon</button>
+            </div>
+            <div class="hint" id="couponBox" style="display:none;"></div>
+
+            <div id="extraWrap" style="display:none; margin-top:10px;">
+              <label id="extraLabel">Extra</label>
+              <input id="extraVal" placeholder="" />
+              <div class="hint" id="extraHint"></div>
+            </div>
+
+            <div class="hint" id="deviceRuleHint" style="display:none;"></div>
+
+            <div class="row" style="margin-top:12px;">
+              <button class="btn btnPrimary" onclick="proceedPayment()">➡️ Continue</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- REVIEW -->
+        <div class="screen" id="scrReview">
+          <div class="card" id="cardReview">
+            <h3>🧾 Review Order</h3>
+            <p>Confirm details before payment.</p>
+
+            <div id="reviewBox"></div>
+            
+            <div class="hint" style="border-style:solid;border-width:1px;">
+              ✅ Instant access after verification<br>
+              🎟️ Coupon is locked only after payment<br>
+              🔁 You can resume payment anytime<br>
+              📧 Email confirmation is sent
+            </div>
+
+            <div class="row" style="margin-top:12px;">
+              <button class="btn btnGhost" onclick="goBack()">⬅️ Edit</button>
+              <button class="btn btnPrimary" onclick="confirmCreateOrder_()">✅ Confirm & Pay</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PAYMENT -->
+        <div class="screen" id="scrPay">
+          <div class="card" id="cardPay">
+            <h3>💰 Payment</h3>
+            <p>Pay exactly with the note shown below for instant verification.</p>
+
+      <div class="hint" style="border-style:solid; border-width:1px;">
+        <div style="font-weight:1000; font-size:14px;">✅ Pay in 4 Steps</div>
+
+        <div style="margin-top:8px; line-height:1.45; font-size:13px; color:var(--muted);">
+          1) <b>Copy Payment Note</b> (Order ID) below<br>
+          2) Choose <b>QR</b> or <b>UPI Link</b> or tap <b>Open UPI App</b><br>
+          3) Paste the <b>Payment Note</b> in UPI “Remark/Message”<br>
+          4) Come back after <b>1–2 minutes</b> and click <b>Verify</b>
+        </div>
+      </div>
+
+      <div class="hint" style="margin-top:10px; border-style:solid; border-width:1px;">
+        <div style="font-size:12px; color:var(--muted); font-weight:900;">UPI ID</div>
+        <div style="font-size:20px; font-weight:1000; letter-spacing:.2px;">fluxfilm@upi</div>
+      </div>
+
+
+            <div class="hint" id="payCouponInfo" style="display:none; border-style:solid; border-width:1px;"></div>
+
+            <div id="qrWrap" style="display:none; margin:12px 0;">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                <div style="font-weight:950;">📸 Scan to Pay</div>
+                <div style="font-size:12px; color:var(--muted); font-weight:800;">UPI QR</div>
+              </div>
+
+              <div style="
+                margin-top:10px;
+                border:1px solid var(--border);
+                border-radius:22px;
+                padding:12px;
+                box-shadow:0 12px 26px rgba(15,23,42,.06);
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                background:#fff;
+              ">
+                <img id="qrImg" alt="UPI QR" style="width:min(280px, 78vw); height:auto; border-radius:16px;" />
+              </div>
+
+              <div style="margin-top:10px; color:var(--muted); font-size:12.5px; line-height:1.35;">
+                ✅ Scan QR OR tap <b>Open UPI App</b>. Always add the <b>Payment Note</b>.
+              </div>
+            </div>
+
+            <div class="kv">
+              <div>
+                <div class="k">OrderID (Payment Note)</div>
+                <div class="v" id="payOrderId">-</div>
+              </div>
+              <button class="copy" onclick="copyText('payOrderId')" aria-label="Copy order id">📋 Copy</button>
+            </div>
+
+            <div class="kv">
+              <div>
+                <div class="k">Amount</div>
+                <div class="v" id="payAmount">-</div>
+              </div>
+              <button class="copy" onclick="copyText('payAmount')" aria-label="Copy amount">📋 Copy</button>
+            </div>
+
+            <div class="kv">
+              <div>
+                <div class="k">UPI Link</div>
+                <div class="v" id="payUpi" style="font-size:12.5px;">-</div>
+              </div>
+              <button class="copy" onclick="copyText('payUpi')" aria-label="Copy upi link">📋 Copy</button>
+            </div>
+
+            <div class="hint" style="border-style:solid; border-width:1px;">
+              <div style="font-weight:950; font-size:14px;">⚠️ IMPORTANT: Add this in UPI "Note / Remark / Message"</div>
+
+              <div style="
+                margin-top:10px;
+                padding:14px;
+                border-radius:18px;
+                background: rgba(34,197,94,.10);
+                border: 1px solid rgba(34,197,94,.35);
+                box-shadow: 0 0 0 4px rgba(34,197,94,.12);
+                display:flex;
+                align-items:center;
+                justify-content:space-between;
+                gap:12px;
+              ">
+                <div>
+                  <div style="color:var(--muted); font-weight:900; font-size:12px;">Payment Note</div>
+                  <div id="payNoteInline" style="font-size:20px; font-weight:1000; letter-spacing:.4px;">-</div>
+                </div>
+                <button class="copy" onclick="copyText('payNoteInline')" style="font-weight:1000;" aria-label="Copy payment note">📋 Copy Note</button>
+              </div>
+
+              <div style="margin-top:10px; color:var(--muted); font-size:12.5px; line-height:1.35;">
+                ✅ Without this note, verification may fail and you'll need to retry.
+              </div>
+            </div>
+
+            <div class="row" style="margin-top:12px;">
+              <button class="btn btnBlue" onclick="openUpi()">📲 Open UPI App</button>
+              <button class="btn btnPrimary" onclick="verifyNow()">✅ I've Paid → Verify</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- VERIFYING (Auto-check) -->
+        <div class="screen" id="scrVerifying">
+          <div class="card">
+            <h3>⏳ Verifying Payment</h3>
+            <p>Please wait. This usually takes <b>1–2 minutes</b>.</p>
+
+            <div style="display:flex; justify-content:center; margin:14px 0 6px;">
+              <div class="spinner" aria-hidden="true"></div>
+            </div>
+
+            <div class="hint" id="verifyHint" style="border-style:solid; border-width:1px;">
+              Checking every <b>15 seconds</b>… Please keep this screen open.
+            </div>
+
+            <div class="row" style="margin-top:12px;">
+              <button class="btn btnGhost" onclick="cancelVerify()">❌ Cancel</button>
+              <button class="btn btnBlue" id="manualVerifyBtn" style="display:none;" onclick="manualVerify()">🧾 Manual Verify</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- IMPORTANT INFO (Post Payment) -->
+        <div class="screen" id="scrInfo">
+          <div class="card">
+            <h3>⚠️ Important Info</h3>
+            <p>Please read this once. Then click continue.</p>
+
+            <div class="infoBox" id="infoMsg" style="display:none;"></div>
+
+            <div class="row" style="margin-top:12px;">
+              <button class="btn btnPrimary" onclick="continueAfterInfo()">✅ Continue</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- DONE -->
+        <div class="screen" id="scrDone">
+          <div class="card">
+            <h3 id="doneTitle">✅ Done</h3>
+            <p id="doneMsg">-</p>
+
+            <div id="accessBox" style="display:none;">
+              <div class="kv">
+                <div>
+                  <div class="k">Login ID</div>
+                  <div class="v" id="accUser">-</div>
+                </div>
+                <button class="copy" onclick="copyText('accUser')" aria-label="Copy login id">📋 Copy</button>
+              </div>
+
+              <div class="kv">
+                <div>
+                  <div class="k">Password</div>
+                  <div class="v" id="accPass">-</div>
+                </div>
+                <button class="copy" onclick="copyText('accPass')" aria-label="Copy password">📋 Copy</button>
+              </div>
+
+              <div id="netflixExtras" style="display:none;">
+                <div class="kv">
+                  <div>
+                    <div class="k">Profile</div>
+                    <div class="v" id="accProfile">-</div>
+                  </div>
+                  <button class="copy" onclick="copyText('accProfile')" aria-label="Copy profile">📋 Copy</button>
+                </div>
+                <div class="kv">
+                  <div>
+                    <div class="k">Profile PIN</div>
+                    <div class="v" id="accPin">-</div>
+                  </div>
+                  <button class="copy" onclick="copyText('accPin')" aria-label="Copy profile pin">📋 Copy</button>
+                </div>
+
+                <div class="hint">
+                  🔒 If profile is locked, you can click <b>Forgot PIN</b> and reset it.<br>
+                  🤖 If stuck, ask Fluxy AI (coming next).
+                </div>
+              </div>
+            </div>
+
+            <div class="row" style="margin-top:12px;">
+              <button class="btn btnGhost" onclick="nav('scrHome', true)">🏠 Go Home</button>
+              <button class="btn btnPrimary" onclick="nav('scrBuy1', true)">🟢 Buy Another</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="wa">
+    <button class="btn btnGhost" style="width:100%;" onclick="openWhatsApp()" aria-label="WhatsApp support">
+      💬 WhatsApp Support (last resort)
+    </button>
+  </div>
+
+<script>
+  let BOOT = null;
+  let SETTINGS = { whatsapp:"", groupFallback:"" };
+
+  // ---------------- Verify Poll (Auto-check) ----------------
+  let VERIFY_TIMER = null;
+  let VERIFY_START = 0;
+  const VERIFY_INTERVAL_SEC = 15;
+  const VERIFY_MAX_MS = 3 * 60 * 1000; // 3 minutes
+
+  const STATE = {
+    service: "",
+    plan: "",
+    planObj: null,
+    groupJoinOk: false,
+    groupLink: "",
+    groupWarnDays: 1,
+    email: "",
+    phone: "",
+    coupon: "",
+    notes: "",
+    extraKey: "",
+    extraVal: "",
+    baseAmount: 0,
+    discount: 0,
+    finalAmount: 0,
+    couponApplied: false,
+    orderId: "",
+    upiLink: "",
+    amountText: "",
+    currency: "",
+    _verifyResult: null
+  };
+
+  const STACK = ["scrHome"];
+
+  function setStatus(text){ 
+    const el = document.getElementById("statusPill");
+    if (el) el.textContent = text;
+  }
+
+  function showLoading(title, sub){
+    const titleEl = document.getElementById("loadTitle");
+    const subEl = document.getElementById("loadSub");
+    const overlay = document.getElementById("overlay");
+    if (titleEl) titleEl.textContent = title || "⏳ Loading…";
+    if (subEl) subEl.textContent = sub || "Please wait";
+    if (overlay) {
+      overlay.setAttribute('aria-hidden', 'false');
+      overlay.classList.add("show");
+      try { overlay.focus(); } catch(e){}
+    }
+  }
+
+  function hideLoading(){ 
+    const overlay = document.getElementById("overlay");
+    if (overlay) {
+      overlay.setAttribute('aria-hidden', 'true');
+      overlay.classList.remove("show");
+    }
+  }
+
+  function resetTo_(id){
+    const stage = document.getElementById("stage");
+    const screens = stage.querySelectorAll(".screen");
+    screens.forEach(s=>s.classList.remove("active","left"));
+    const targetScreen = document.getElementById(id);
+    if (targetScreen) targetScreen.classList.add("active");
+
+    STACK.length = 0;
+    STACK.push(id);
+
+    document.getElementById("backBtn").style.display = "none";
+    setTopbarFor_(id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function setTopbarFor_(id){
+    if(id && (id.startsWith("scrBuy") || id==="scrGroup" || id==="scrDetails" || id==="scrReview" || id==="scrPay" || id==="scrDone" || id==="scrVerifying")){
+      document.getElementById("topTitle").textContent = "FluxFilm • Buy";
+      document.getElementById("topSub").textContent = "Fast checkout • App-like experience ✅";
+      return;
+    }
+
+    if(id === "scrManage"){
+      document.getElementById("topTitle").textContent = "FluxFilm • Manage";
+      document.getElementById("topSub").textContent = "Renew anytime • No login ✅";
+      return;
+    }
+
+    document.getElementById("topTitle").textContent = "FluxFilm";
+    document.getElementById("topSub").textContent = "Self-serve subscriptions • Instant access ✅";
+  }
+
+  function nav(id, reset=false){
+    if(reset){
+      resetTo_(id);
+      return;
+    }
+
+    const stage = document.getElementById("stage");
+    const screens = stage.querySelectorAll(".screen");
+    const current = STACK[STACK.length-1];
+
+    if(id !== current) STACK.push(id);
+
+    document.getElementById("backBtn").style.display = STACK.length>1 ? "inline-flex" : "none";
+
+    screens.forEach(s=>{
+      s.classList.remove("active","left");
+      if(s.id === current) s.classList.add("left");
+    });
+    document.getElementById(id).classList.add("active");
+
+    setTopbarFor_(id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function goBack(){
+    if(STACK.length<=1) return;
+
+    const stage = document.getElementById("stage");
+    const screens = stage.querySelectorAll(".screen");
+
+    STACK.pop();
+    const id = STACK[STACK.length-1];
+
+    screens.forEach(s=>s.classList.remove("active","left"));
+    document.getElementById(id).classList.add("active");
+
+    document.getElementById("backBtn").style.display = STACK.length>1 ? "inline-flex" : "none";
+    setTopbarFor_(id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function comingSoon(name){
+    alert(`🚧 ${name} is coming next.\n\nRight now we are finishing Buy → Pay → Verify → Access first.`);
+  }
+
+  // Cancel / Manual verify helpers
+  function cancelVerify(){
+    stopVerifyPoll_();
+    nav("scrPay", true);
+  }
+
+  function manualVerify(){
+    stopVerifyPoll_();
+    verifyNow(true);
+  }
+
+  function stopVerifyPoll_(){
+    if (VERIFY_TIMER) {
+      clearTimeout(VERIFY_TIMER);
+      VERIFY_TIMER = null;
+    }
+    VERIFY_START = 0;
+    const btn = document.getElementById("manualVerifyBtn");
+    if (btn) btn.style.display = "none";
+  }
+
+  // ---------------- Manage / Renew ----------------
+
+  function openManage(){
+    nav("scrManage", true);
+
+    const cached = getResume_() || {};
+    const ph = String(cached.phone || "").trim();
+    if(ph){
+      const el = document.getElementById("mgPhone");
+      if(el) el.value = ph;
+    }
+
+    // reset UI
+    const resCard = document.getElementById("mgResultsCard");
+    if(resCard) resCard.style.display = "none";
+    const a = document.getElementById("mgActionable");
+    const h = document.getElementById("mgHistory");
+    const hw = document.getElementById("mgHistoryWrap");
+    if(a) a.innerHTML = "";
+    if(h) h.innerHTML = "";
+    if(hw) hw.style.display = "none";
+  }
+
+  function normPhone_(p){
+    let s = String(p || "").replace(/\D/g, "");
+    if(s.length > 10) s = s.slice(-10);
+    return s;
+  }
+
+  function loadMySubs(){
+    const ph = normPhone_(document.getElementById("mgPhone").value);
+    if(!ph) return alert("Please enter your phone number.");
+
+    showLoading("🔁 Loading subscriptions…", "Fetching your active & recent subscriptions");
+
+    console.log("[Manage] Calling getMySubscriptions:", ph);
+
+    google.script.run
+      .withSuccessHandler(function(res){
+        hideLoading();
+        console.log("[Manage] Success response:", res);
+
+        if(!res){
+          alert(
+            "Could not fetch subscriptions (empty response).\n\n" +
+            "Most common reason: Web App NOT deployed to latest version.\n\n" +
+            "Fix:\nDeploy → Manage deployments → Edit → New version → Deploy"
+          );
+          return;
+        }
+
+        // If backend returns {ok:false,...}
+        if(res.ok === false){
+          alert(res.message || "Could not fetch subscriptions. Try again.");
+          return;
+        }
+
+        // If backend accidentally returns ok_({ ... }) style
+        // (fallback support so UI never breaks)
+        if(res.ok === true && res.actionable === undefined && res.data){
+          res = res.data;
+        }
+
+        renderMySubs_(res);
+
+      })
+      .withFailureHandler(function(err){
+        hideLoading();
+
+        console.log("[Manage] Failure:", err);
+
+        const msg =
+          (err && err.message) ? err.message :
+          (typeof err === "string" ? err : JSON.stringify(err));
+
+        alert("Manage failed:\n" + msg);
+      })
+      .getMySubscriptions_(ph);
+  }
+
+
+  function renderMySubs_(res){
+    const resCard = document.getElementById("mgResultsCard");
+    const sum = document.getElementById("mgSummary");
+    const wrapA = document.getElementById("mgActionable");
+    const wrapH = document.getElementById("mgHistory");
+    const hw = document.getElementById("mgHistoryWrap");
+
+    if(!resCard || !sum || !wrapA || !wrapH || !hw) return;
+
+    resCard.style.display = "block";
+    wrapA.innerHTML = "";
+    wrapH.innerHTML = "";
+    hw.style.display = "none";
+
+    const actionable = Array.isArray(res.actionable) ? res.actionable : [];
+    const history = Array.isArray(res.history) ? res.history : [];
+
+    const total = actionable.length + history.length;
+    sum.textContent = total ? `Found ${total} subscription(s) for this number.` : `No subscriptions found for this number.`;
+
+    if(!total){
+      wrapA.innerHTML = `
+        <div class="smallNote">
+          ❌ No subscriptions found.<br>
+          ✅ Please enter the same phone number used at checkout.
+        </div>
+      `;
+      return;
+    }
+
+    // Actionable cards (ACTIVE + expired<=5d)
+    actionable.forEach(s=>{
+      wrapA.appendChild(buildSubCard_(s, true));
+    });
+
+    // History cards (expired>5d) only last 3
+    if(history.length){
+      hw.style.display = "block";
+      history.forEach(s=>{
+        wrapH.appendChild(buildSubCard_(s, false));
+      });
+    }
+  }
+
+  function buildSubCard_(s, canAct){
+    const div = document.createElement("div");
+
+    const tone = String(s.uiTone || "normal");
+    div.className = "subCard" + (tone === "faded_red" ? " fadedRed" : (tone === "faded_grey" ? " fadedGrey" : ""));
+
+    const svc = escapeHtml(s.service || "-");
+    const plan = escapeHtml(s.plan || "-");
+    const mail = escapeHtml(s.maskedEmail || "-");
+
+    const daysLeft = (s.daysLeft == null) ? "" : Number(s.daysLeft);
+    const expTxt = formatDate_(s.expiryDate);
+
+    const moodEmoji = escapeHtml(s.moodEmoji || "❓");
+    const moodText = escapeHtml(s.moodText || "");
+
+    // Badge style by urgency
+    const moodCls =
+      (daysLeft === "" ? "moodPill" :
+        (daysLeft <= 0 ? "moodBad" :
+          (daysLeft <= 5 ? "moodWarn" : "moodPill")));
+
+    // Early renew hint (UI-only for now; actual discount will be applied in renewal order step)
+    const showEarly = (daysLeft !== "" && daysLeft > 0 && daysLeft <= 7);
+
+    const elig = String(s.renewEligibility || "");
+    const lateNote = (elig === "LATE_RENEW")
+      ? `<div class="smallNote">⚠️ Late renewal (within 5 days). Renewal will add <b>25 days</b> for a 1-month plan.</div>`
+      : "";
+
+    const tooLateNote = (!canAct || elig === "TOO_LATE")
+      ? `<div class="smallNote">🟥 Expired • Too late to renew. (Shown for history)</div>`
+      : "";
+
+    const btnHtml = (canAct && s.showRenewButton)
+      ? `
+        <div class="row" style="margin-top:12px;">
+          <button class="btn btnPrimary" onclick="startRenew('${escapeHtml(String(s.subId || ""))}')">⚡ Renew</button>
+        </div>
+      `
+      : "";
+
+    div.innerHTML = `
+      <div class="subCardTop">
+        <div>
+          <p class="subTitle" style="margin:0;">${svc}</p>
+          <div class="subPlan">${plan}</div>
+        </div>
+
+        <span class="moodPill ${moodCls}">${moodEmoji} ${moodText}</span>
+      </div>
+
+      <div class="subMeta">
+        <div class="metaBox">
+          <div class="metaK">Email</div>
+          <div class="metaV">${mail}</div>
+        </div>
+
+        <div class="metaBox">
+          <div class="metaK">Expiry</div>
+          <div class="metaV">${escapeHtml(expTxt)}</div>
+        </div>
+      </div>
+
+      ${showEarly ? `<div class="smallNote">🎁 Early renew discount may apply (if you renew before expiry).</div>` : ``}
+      ${lateNote}
+      ${tooLateNote}
+      ${btnHtml}
+    `;
+
+    return div;
+  }
+
+  function formatDate_(d){
+    try{
+      if(!d) return "-";
+      const x = (d instanceof Date) ? d : new Date(d);
+      if(isNaN(x.getTime())) return String(d);
+      return x.toLocaleString();
+    }catch(e){
+      return String(d || "-");
+    }
+  }
+
+  /**
+   * Renew flow (Phase 2.2 will connect payment):
+   * For now: safe placeholder. Next step we will create renew order + reuse scrPay.
+   */
+  function startRenew(subId){
+    if(!subId) return alert("Subscription not found.");
+
+    alert(
+      "✅ Renew selected for: " + subId + "\n\n" +
+      "Next step: I will connect this button to payment (createRenewOrder) + auto-extend expiry."
+    );
+  }
+
+  // safer clipboard with fallback
+  function copyText(id){
+    const el = document.getElementById(id);
+    const text = (el && (el.textContent || el.value)) ? (el.textContent || el.value) : "";
+    if(!text || text === "-") return;
+
+    // try navigator.clipboard first
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(()=>{
+        const old = el.textContent;
+        el.textContent = old + " ✅";
+        setTimeout(()=>{ el.textContent = old; }, 650);
+      }).catch(()=>{ fallbackCopy(text, el); });
+    } else {
+      fallbackCopy(text, el);
+    }
+  }
+  function fallbackCopy(text, el){
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const old = el.textContent;
+      el.textContent = old + " ✅";
+      setTimeout(()=>{ el.textContent = old; }, 650);
+    } catch(e) {
+      // ignore
+    }
+  }
+
+  function openWhatsApp(){
+    const link = SETTINGS.whatsapp || "https://wa.me/message/UWTAS2ZMVF4QJ1";
+    const w = window.open(link, "_blank");
+    try{ if(w) w.opener = null; } catch(e){}
+  }
+
+  function escapeHtml(s){
+    return String(s||"")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  // ---------------- Resume (localStorage) ----------------
+  function getResume_(){
+    try{
+      const s = localStorage.getItem("FF_RESUME");
+      if(!s) return null;
+      return JSON.parse(s);
+    }catch(e){ return null; }
+  }
+  function saveResume_(obj){
+    try{ localStorage.setItem("FF_RESUME", JSON.stringify(obj)); }catch(e){}
+    refreshResumeUI_();
+  }
+  function clearResume_(){
+    try{ localStorage.removeItem("FF_RESUME"); }catch(e){}
+    refreshResumeUI_();
+  }
+  function refreshResumeUI_(){
+    const r = getResume_();
+    const btn = document.getElementById("btnResume");
+    const hint = document.getElementById("resumeHint");
+    if(!btn || !hint) return;
+
+    if(r && r.orderId && r.phone){
+      btn.style.display = "inline-flex";
+      hint.style.display = "block";
+      hint.innerHTML = `🔁 Pending payment found<br>Phone: <b>${escapeHtml(r.phone)}</b><br>Order: <b>${escapeHtml(r.orderId)}</b><br>Amount: <b>${escapeHtml(r.amountText||"-")}</b>`;
+    } else {
+      btn.style.display = "none";
+      hint.style.display = "none";
+      hint.textContent = "";
+    }
+  }
+
+  // Your backend resume function name stays same
+  function resumePayment(){
+    const cached = getResume_() || {};
+    const phoneDefault = cached.phone || "";
+    const phone = prompt("Enter phone number to resume payment:", phoneDefault);
+    if(!phone) return;
+
+    showLoading("🔁 Resuming…", "Fetching your last pending order");
+    google.script.run.withSuccessHandler(r=>{
+      hideLoading();
+      if(!r || !r.orderId){
+        alert("No pending order found for this phone.");
+        return;
+      }
+
+      STATE.orderId = r.orderId;
+      STATE.service = r.service || STATE.service || "";
+      STATE.plan = r.plan || STATE.plan || "";
+      STATE.currency = r.currency || "INR";
+      STATE.finalAmount = Number(r.finalAmount || 0);
+      STATE.upiLink = r.upiLink || "-";
+
+      STATE.discount = Number(r.discount || 0);
+      STATE.coupon = String(r.couponCode || "");
+      STATE.couponApplied = (STATE.discount > 0);
+
+      STATE.amountText = `₹${Math.round(STATE.finalAmount)} ${STATE.currency}`.trim();
+
+      document.getElementById("payOrderId").textContent = STATE.orderId;
+      document.getElementById("payAmount").textContent = STATE.amountText;
+      document.getElementById("payUpi").textContent = STATE.upiLink;
+      document.getElementById("payNoteInline").textContent = STATE.orderId;
+
+      renderPayCouponInfo_();
+
+      const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=360x360&margin=8&data=" + encodeURIComponent(STATE.upiLink);
+      document.getElementById("qrImg").src = qrUrl;
+      document.getElementById("qrWrap").style.display = "block";
+
+      saveResume_({
+        phone: String(phone),
+        orderId: STATE.orderId,
+        amountText: STATE.amountText,
+        ts: Date.now()
+      });
+
+      nav("scrPay", true);
+
+    }).withFailureHandler(err=>{
+      hideLoading();
+      alert("Resume failed:\n" + (err && err.message ? err.message : err));
+    }).getResumePaymentByPhone(phone);
+  }
+
+  // ... rest of script unchanged (coupon, plan rendering, verifyNow, continueAfterInfo, etc.)
+
+  // ---------------- Coupon UI ----------------
+  function showCouponBox_(html){
+    const box = document.getElementById("couponBox");
+    box.style.display = "block";
+    box.innerHTML = html;
+  }
+  function hideCouponBox_(){
+    const box = document.getElementById("couponBox");
+    box.style.display = "none";
+    box.textContent = "";
+  }
+
+  function removeCoupon(){
+    STATE.couponApplied = false;
+    STATE.discount = 0;
+    STATE.finalAmount = STATE.baseAmount || Number(STATE.planObj?.price || 0);
+    hideCouponBox_();
+    document.getElementById("inCoupon").value = "";
+    renderPayCouponInfo_();
+    alert("Coupon removed.");
+  }
+
+  function applyCoupon(){
+    const p = STATE.planObj;
+    if(!p) return alert("Select a plan first.");
+
+    const phone = document.getElementById("inPhone").value.trim();
+    const code = document.getElementById("inCoupon").value.trim();
+    const amount = Number(p.price || 0);
+
+    if(!phone) return alert("Enter phone first.");
+    if(!code) return alert("Enter coupon code.");
+
+    showLoading("🎟️ Applying coupon…", "Checking eligibility + discount");
+    google.script.run.withSuccessHandler(res=>{
+      hideLoading();
+      if(!res || !res.ok){
+        STATE.couponApplied = false;
+        STATE.discount = 0;
+        STATE.finalAmount = amount;
+        showCouponBox_(`❌ ${escapeHtml((res && res.message) ? res.message : "Coupon invalid")}`);
+        return;
+      }
+
+      STATE.couponApplied = true;
+      STATE.coupon = res.code || code;
+      STATE.discount = Number(res.discount || 0);
+      STATE.finalAmount = Number(res.finalAmount || (amount - STATE.discount));
+
+      showCouponBox_(
+        `✅ Coupon Applied: <b>${escapeHtml(STATE.coupon)}</b><br>` +
+        `Discount: <b>₹${Math.round(STATE.discount)}</b><br>` +
+        `Final Amount: <b>₹${Math.round(STATE.finalAmount)}</b>`
+      );
+
+    }).withFailureHandler(err=>{
+      hideLoading();
+      showCouponBox_("❌ Coupon check failed. Try again.");
+    }).validateCoupon(code, {
+      phone: phone,
+      amount: amount,
+      service: STATE.service,
+      plan: STATE.plan,
+      scope: "NEW"
+    });
+  }
+
+  function renderPayCouponInfo_(){
+    const el = document.getElementById("payCouponInfo");
+    if(!el) return;
+
+    const has = STATE.couponApplied && (Number(STATE.discount||0) > 0);
+    if(!has){
+      el.style.display = "none";
+      el.textContent = "";
+      return;
+    }
+    el.style.display = "block";
+    el.innerHTML = `🎟️ Coupon <b>${escapeHtml(STATE.coupon)}</b> applied • You saved <b>₹${Math.round(STATE.discount)}</b> ✅`;
+  }
+
+  // ---------------- NEW: Logo selection from BOOT.plans ----------------
+  // picks a logoUrl for a service from any plan row (first non-empty)
+  function getServiceLogo_(serviceName){
+    const plans = (BOOT && BOOT.plans) ? BOOT.plans : [];
+    const svc = String(serviceName||"").trim();
+    for(const p of plans){
+      if(String(p.service||"").trim() === svc){
+        const u = String(p.logoUrl||"").trim();
+        if(u) return u;
+      }
+    }
+    return "";
+  }
+
+  // ---------------- Review Summary ----------------
+
+  function renderReview_(){
+    const box = document.getElementById("reviewBox");
+    if(!box) return;
+
+    const base = Number(STATE.baseAmount || 0);
+    const disc = Number(STATE.couponApplied ? (STATE.discount||0) : 0);
+    const finalAmt = Number(STATE.couponApplied ? (STATE.finalAmount||base) : base);
+
+    const rows = [];
+    rows.push(["Service", STATE.service]);
+    rows.push(["Plan", STATE.plan]);
+    rows.push(["Email", STATE.email]);
+    rows.push(["Phone", STATE.phone]);
+
+    if(STATE.extraKey && STATE.extraVal) rows.push(["Extra", `${STATE.extraKey}: ${STATE.extraVal}`]);
+    if(STATE.notes) rows.push(["Notes", STATE.notes]);
+
+    rows.push(["Base Price", `₹${Math.round(base)}`]);
+    if(disc > 0) rows.push(["Discount", `- ₹${Math.round(disc)} (${STATE.coupon || "Coupon"})`]);
+    rows.push(["Final Amount", `₹${Math.round(finalAmt)}`]);
+
+    box.innerHTML = rows.map(([k,v])=>`
+      <div class="kv">
+        <div>
+          <div class="k">${escapeHtml(k)}</div>
+          <div class="v">${escapeHtml(String(v||"-"))}</div>
+        </div>
+        <span></span>
+      </div>
+    `).join("");
+  }
+
+  function confirmCreateOrder_(){
+    createOrderNow_();
+  }
+
+  // ---------------- Data load ----------------
+  function silentBootstrap(){
+    setStatus("⏳ Sync…");
+    if (typeof google === 'undefined' || !google.script || !google.script.run) {
+      // running locally or google not available
+      setStatus("⚠️ Offline");
+      refreshResumeUI_();
+      return;
+    }
+    google.script.run.withSuccessHandler(r=>{
+      BOOT = r;
+      setStatus("✅ Ready");
+      hydrateServices();
+      refreshResumeUI_();
+    }).withFailureHandler(err=>{
+      setStatus("⚠️ Offline");
+      refreshResumeUI_();
+    }).getBootstrap();
+
+    SETTINGS.whatsapp = "https://wa.me/message/UWTAS2ZMVF4QJ1";
+    SETTINGS.groupFallback = "https://chat.whatsapp.com/IY67tbIr0zj0WfTFyYp3eB";
+  }
+
+  function hydrateServices(){
+    const list = document.getElementById("serviceList");
+    list.innerHTML = "";
+
+    const plans = (BOOT && BOOT.plans) ? BOOT.plans : [];
+    const services = [...new Set(plans.map(p=>p.service))].sort((a,b)=>a.localeCompare(b));
+
+    services.forEach(svc=>{
+      const svcPlans = plans.filter(p=>p.service===svc);
+      const hasManual = svcPlans.some(p=>String(p.fulfillmentMode).toUpperCase()==="MANUAL");
+      const logoUrl = getServiceLogo_(svc); // ✅ NEW
+
+      const div = document.createElement("div");
+      div.className = "svc";
+      div.onclick = ()=> selectService(svc);
+      div.tabIndex = 0;
+      div.onkeypress = (e)=>{ if(e.key === 'Enter' || e.key === ' ') selectService(svc); };
+
+      div.innerHTML = `
+        <div class="svcLeft">
+          ${logoUrl ? `<img class="svcLogo" src="${escapeHtml(logoUrl)}" alt="${escapeHtml(svc)}" onerror="this.style.display='none'">` : ``}
+          <div class="svcText">
+            ${escapeHtml(svc)}
+            <small>${hasManual ? "Includes manual activation 🕒" : "Instant after verification ⚡"}</small>
+          </div>
+        </div>
+        <span class="badge ${hasManual ? "manual":"instant"}">${hasManual ? "🕒 Manual":"⚡ Instant"}</span>
+      `;
+      list.appendChild(div);
+    });
+  }
+
+  function selectService(svc){
+    STATE.service = svc;
+    STATE.plan = "";
+    STATE.planObj = null;
+    STATE.groupJoinOk = false;
+
+    nav("scrBuy2");
+    hydratePlans();
+  }
+
+  function hydratePlans(){
+    const grid = document.getElementById("planGrid");
+    grid.innerHTML = "";
+
+    const plans = (BOOT && BOOT.plans) ? BOOT.plans : [];
+    const list = plans.filter(p=>p.service===STATE.service);
+
+    document.getElementById("planSub").textContent = `Select plan for ${STATE.service}`;
+
+    list.forEach(p=>{
+      const div = document.createElement("div");
+      div.className = "planCard";
+      div.onclick = ()=> selectPlan(p);
+      div.tabIndex = 0;
+      div.onkeypress = (e)=>{ if(e.key === 'Enter' || e.key === ' ') selectPlan(p); };
+
+      const badge = String(p.fulfillmentMode).toUpperCase()==="MANUAL" ? "🕒 Manual" : "⚡ Instant";
+      const price = (p.price!=null) ? `₹${p.price}` : "";
+
+      const badgeText = (p.badgeText || "").trim();
+      const benefits = Array.isArray(p.benefits) ? p.benefits : [];
+
+      const top2 = benefits.slice(0,2).map(x=>`• ${escapeHtml(x)}`).join("<br>");
+      const more = benefits.slice(2).map(x=>`• ${escapeHtml(x)}`).join("<br>");
+      const hasMore = benefits.length > 2;
+
+      const key = safeKey_(p.service + "||" + p.plan);
+      const badgeHtml = badgeText ? `<span class="badgeGlow">⭐ ${escapeHtml(badgeText)}</span>` : "";
+
+      const benefitsHtml = benefits.length ? `
+        <div class="benefits">
+          ${top2}
+          ${hasMore ? `
+            <span id="more_${key}" style="display:none;"><br>${more}</span>
+            <div style="margin-top:6px;">
+              <span class="chip" onclick="event.stopPropagation(); toggleMore('${key}', this)">Show more ▾</span>
+            </div>
+          ` : ``}
+        </div>
+      ` : "";
+
+      const logoUrl = String(p.logoUrl || "").trim(); // ✅ NEW
+
+      div.innerHTML = `
+        <div class="planLeft">
+          ${logoUrl ? `<img class="svcLogo" src="${escapeHtml(logoUrl)}" alt="${escapeHtml(p.service)}" onerror="this.style.display='none'">` : ``}
+          <div class="planText">
+            <b>${escapeHtml(p.plan)} • ${price}</b>
+            ${badgeHtml}
+            <small>${escapeHtml(p.deviceRuleText || "")}</small>
+            ${benefitsHtml}
+          </div>
+        </div>
+        <div class="price">${badge}</div>
+      `;
+
+      grid.appendChild(div);
+    });
+  }
+
+  function safeKey_(s){
+    return String(s || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .slice(0, 60);
+  }
+
+  function toggleMore(key, chipEl){
+    const el = document.getElementById("more_" + key);
+    if(!el) return;
+    const open = el.style.display !== "none";
+    el.style.display = open ? "none" : "inline";
+    if(chipEl) chipEl.textContent = open ? "Show more ▾" : "Show less ▴";
+  }
+
+  function selectPlan(planObj){
+    STATE.planObj = planObj;
+    STATE.plan = planObj.plan;
+
+    STATE.baseAmount = Number(planObj.price || 0);
+    STATE.finalAmount = STATE.baseAmount;
+    STATE.discount = 0;
+    STATE.couponApplied = false;
+    hideCouponBox_();
+    document.getElementById("inCoupon").value = "";
+
+    if(planObj.requiresGroupJoin){
+      STATE.groupLink = planObj.groupJoinLink || SETTINGS.groupFallback;
+      STATE.groupWarnDays = Number(planObj.groupSuspendWarningDays || 1);
+      STATE.groupJoinOk = false;
+
+      const warnOn = new Date();
+      warnOn.setDate(warnOn.getDate() + STATE.groupWarnDays);
+
+      document.getElementById("groupHint").innerHTML =
+        `🔗 Group link required for this plan.<br><br>` +
+        `⚠️ If you click <b>I Joined</b> without joining, your subscription may be <b>Suspended</b> on <b>${warnOn.toLocaleDateString()}</b>.<br>` +
+        `We cannot auto-check WhatsApp join, so please join first. ✅`;
+
+      nav("scrGroup");
+      return;
+    }
+
+    openDetails();
+  }
+
+  function openGroup(){
+    const link = STATE.groupLink || SETTINGS.groupFallback;
+    const w = window.open(link, "_blank");
+    try{ if(w) w.opener = null; } catch(e){}
+  }
+
+  function confirmGroupJoined(){
+    STATE.groupJoinOk = true;
+    openDetails();
+  }
+
+  function openDetails(){
+    nav("scrDetails");
+
+    const p = STATE.planObj;
+    const wrap = document.getElementById("extraWrap");
+    const label = document.getElementById("extraLabel");
+    const hint = document.getElementById("extraHint");
+    const input = document.getElementById("extraVal");
+
+    if(p && p.needsExtraField){
+      wrap.style.display = "block";
+      label.textContent = p.extraFieldLabel || "Extra info ✍️";
+      input.placeholder = (p.extraFieldKey === "PRIME_DEVICE_TYPE") ? "Choose TV or NON_TV" : "Enter value";
+      hint.textContent =
+        (p.extraFieldKey === "PRIME_DEVICE_TYPE")
+          ? "📌 Prime needs device type. Type: TV or NON_TV (Mobile/Laptop/Tablet)."
+          : "📌 This plan needs extra info (e.g. YouTube email).";
+    } else {
+      wrap.style.display = "none";
+      input.value = "";
+    }
+
+    const d = document.getElementById("deviceRuleHint");
+    if(p && p.deviceRuleText){
+      d.style.display = "block";
+      d.textContent = "⚠️ " + p.deviceRuleText;
+    } else {
+      d.style.display = "none";
+      d.textContent = "";
+    }
+
+    if(p && p.extraFieldKey === "PRIME_DEVICE_TYPE"){
+      hint.innerHTML = `
+        <div style="margin-top:10px;">
+          <span class="chip" id="chipTV" onclick="setPrimeDevice('TV')">📺 TV / Firestick</span>
+          <span class="chip" id="chipNTV" onclick="setPrimeDevice('NON_TV')">📱 Mobile/Laptop</span>
+        </div>
+        <div style="margin-top:10px; color:var(--muted); font-size:12.5px;">
+          Prime rule: Total ≤ 4 users per account, TV users ≤ 2.
+        </div>
+      `;
+    }
+  }
+
+  function setPrimeDevice(val){
+    document.getElementById("extraVal").value = val;
+    const t = document.getElementById("chipTV");
+    const n = document.getElementById("chipNTV");
+    if(t) t.classList.toggle("on", val==="TV");
+    if(n) n.classList.toggle("on", val==="NON_TV");
+  }
+
+  // ---------------- Details -> Review -> Create Order ----------------
+  function proceedPayment(){
+    const p = STATE.planObj;
+    if(!p){ alert("Select a plan first."); return; }
+
+    if(p.requiresGroupJoin && !STATE.groupJoinOk){
+      alert("Please join the group first and click ✅ I Joined.");
+      return;
+    }
+
+    STATE.email = document.getElementById("inEmail").value.trim();
+    STATE.phone = document.getElementById("inPhone").value.trim();
+    STATE.coupon = document.getElementById("inCoupon").value.trim();
+    STATE.notes = document.getElementById("inNotes").value.trim();
+    STATE.extraKey = p.extraFieldKey || "";
+    STATE.extraVal = document.getElementById("extraVal").value.trim();
+
+    if(!STATE.email) return alert("Email is required.");
+    if(!STATE.phone) return alert("Phone is required.");
+
+    if(p.needsExtraField && !STATE.extraVal){
+      return alert("Please fill the required field: " + (p.extraFieldLabel || "Extra info"));
+    }
+
+    if(STATE.coupon && !STATE.couponApplied){
+      const ok = confirm("You entered a coupon but didn't click Apply Coupon.\n\nContinue without applying it?");
+      if(!ok) return;
+    }
+
+    renderReview_();
+    nav("scrReview");
+  }
+
+  function createOrderNow_(){
+    const p = STATE.planObj;
+    if(!p){ alert("Select a plan first."); return; }
+
+    const discountToSend = (STATE.couponApplied ? Number(STATE.discount||0) : 0);
+
+    showLoading("🧾 Creating order…", "Generating OrderID + UPI link");
+    google.script.run.withSuccessHandler(r=>{
+      hideLoading();
+      if(!r || !r.ok){
+        alert((r && r.message) ? r.message : "Order creation failed.");
+        return;
+      }
+
+      STATE.orderId = r.orderId;
+      STATE.upiLink = r.upiLink;
+      STATE.currency = r.currency || "INR";
+
+      const finalAmt = Number(r.amount || 0);
+      STATE.finalAmount = finalAmt;
+      STATE.amountText = `₹${finalAmt} ${STATE.currency}`.trim();
+
+      document.getElementById("payOrderId").textContent = STATE.orderId;
+      document.getElementById("payAmount").textContent = STATE.amountText;
+      document.getElementById("payUpi").textContent = STATE.upiLink;
+      document.getElementById("payNoteInline").textContent = STATE.orderId;
+
+      renderPayCouponInfo_();
+
+      const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=360x360&margin=8&data=" + encodeURIComponent(STATE.upiLink);
+      document.getElementById("qrImg").src = qrUrl;
+      document.getElementById("qrWrap").style.display = "block";
+
+      saveResume_({
+        phone: STATE.phone,
+        orderId: STATE.orderId,
+        amountText: STATE.amountText,
+        ts: Date.now()
+      });
+
+      nav("scrPay");
+
+    }).withFailureHandler(err=>{
+      hideLoading();
+      alert("Create order failed:\n" + (err && err.message ? err.message : err));
+    }).createOrder({
+      service: STATE.service,
+      plan: STATE.plan,
+      email: STATE.email,
+      phone: STATE.phone,
+      couponCode: (STATE.couponApplied ? (STATE.coupon || "") : (STATE.coupon || "")),
+      notes: STATE.notes,
+      extraFieldKey: STATE.extraKey,
+      extraFieldValue: STATE.extraVal,
+      discountOverride: discountToSend
+    });
+  }
+
+
+  function openUpi(){
+    if(!STATE.upiLink) return alert("UPI link not ready.");
+    window.location.href = STATE.upiLink;
+  }
+
+  // ---------------- verifyNow (polling) ----------------
+  function verifyNow(isManual){
+    if(!STATE.orderId) return alert("Order not ready.");
+
+    // Start / continue polling timer
+    if(!VERIFY_START) VERIFY_START = Date.now();
+
+    // Go to verifying screen (loader)
+    nav("scrVerifying", true);
+
+    const hint = document.getElementById("verifyHint");
+    if(hint){
+      const elapsed = Math.floor((Date.now() - VERIFY_START) / 1000);
+      hint.innerHTML = `Checking every <b>${VERIFY_INTERVAL_SEC} seconds</b>…<br>Elapsed: <b>${elapsed}s</b>`;
+    }
+
+    google.script.run.withSuccessHandler(r=>{
+      // Treat backend bad_() as "keep waiting" during the 3-min window
+      if(!r){
+        r = { found:false, retryAfterSec: VERIFY_INTERVAL_SEC, message:"Auto-checking..." };
+      }
+
+      if(r.ok === false){
+        const elapsedMs = Date.now() - VERIFY_START;
+
+        // keep polling up to 3 mins even on backend errors
+        if(elapsedMs < VERIFY_MAX_MS){
+          VERIFY_TIMER = setTimeout(()=> verifyNow(false), VERIFY_INTERVAL_SEC * 1000);
+          return;
+        }
+
+        // after 3 mins: allow manual verify button
+        const btn = document.getElementById("manualVerifyBtn");
+        if(btn) btn.style.display = "inline-flex";
+
+        if(hint){
+          hint.innerHTML = `⚠️ Still not verified after <b>3 minutes</b>.<br>${escapeHtml(r.message || "Try Manual Verify.")}`;
+        }
+        return;
+      }
+
+      // Not found yet → keep auto checking
+      if(r.found === false){
+        const elapsedMs = Date.now() - VERIFY_START;
+
+        if(elapsedMs >= VERIFY_MAX_MS){
+          // timeout -> show manual verify button
+          const btn = document.getElementById("manualVerifyBtn");
+          if(btn) btn.style.display = "inline-flex";
+
+          if(hint){
+            hint.innerHTML =
+              `⚠️ Still not detected after <b>3 minutes</b>.<br>` +
+              `Click <b>Manual Verify</b> or wait and try again.`;
+          }
+          return;
+        }
+
+        // schedule next poll
+        VERIFY_TIMER = setTimeout(()=>{
+          verifyNow(false);
+        }, (r.retryAfterSec || VERIFY_INTERVAL_SEC) * 1000);
+
+        return;
+      }
+
+      // Found → stop polling and proceed
+      stopVerifyPoll_();
+
+      // Store verify result for info + access screens
+      STATE._verifyResult = r;
+
+      // Show Important Info screen (from backend/plan) — fallback to r.message as well
+      const msg = String(r.postPaymentMessage || r.message || "").trim();
+      if(msg){
+        const box = document.getElementById("infoMsg");
+        const lines = msg.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+
+        box.style.display = "block";
+        box.innerHTML = `
+          <div class="infoTitle">⚠️ IMPORTANT</div>
+          <ul>
+            ${lines.map(l=>`<li>${escapeHtml(l)}</li>`).join("")}
+          </ul>
+        `;
+
+        nav("scrInfo", true);
+        return;
+      }
+
+
+      // No message -> show access directly
+      continueAfterInfo();
+
+    }).withFailureHandler(err=>{
+      const elapsedMs = Date.now() - VERIFY_START;
+
+      const hint = document.getElementById("verifyHint");
+      const msg = (err && err.message) ? err.message : String(err || "Temporary error");
+
+      if(hint){
+        const elapsed = Math.floor(elapsedMs / 1000);
+        hint.innerHTML =
+          `⚠️ Temporary error while checking…<br>` +
+          `${escapeHtml(msg)}<br>` +
+          `Retrying in <b>${VERIFY_INTERVAL_SEC}s</b> • Elapsed: <b>${elapsed}s</b>`;
+      }
+
+      // keep polling within 3 minutes
+      if(elapsedMs < VERIFY_MAX_MS){
+        if(VERIFY_TIMER) clearTimeout(VERIFY_TIMER);
+        VERIFY_TIMER = setTimeout(()=>{
+          verifyNow(false);
+        }, VERIFY_INTERVAL_SEC * 1000);
+        return;
+      }
+
+      // after 3 minutes → allow manual verify
+      const btn = document.getElementById("manualVerifyBtn");
+      if(btn) btn.style.display = "inline-flex";
+
+      if(hint){
+        hint.innerHTML =
+          `⚠️ Still not verified after <b>3 minutes</b>.<br>` +
+          `${escapeHtml(msg)}<br>` +
+          `Click <b>Manual Verify</b> or try again later.`;
+      }
+    }).verifyPayment(STATE.orderId);
+
+  }
+
+  function continueAfterInfo(){
+    const r = STATE._verifyResult;
+
+    if(!r || !r.found){
+      nav("scrDone", true);
+      document.getElementById("doneTitle").textContent = "❌ Verification error";
+      document.getElementById("doneMsg").textContent = "Please verify again.";
+      document.getElementById("accessBox").style.display = "none";
+      return;
+    }
+
+    if(r.fulfillment === "MANUAL_PENDING"){
+      nav("scrDone", true);
+      document.getElementById("doneTitle").textContent = "✅ Payment received";
+      document.getElementById("doneMsg").textContent = r.message || "Activation will be done manually soon.";
+      document.getElementById("accessBox").style.display = "none";
+      STATE._verifyResult = null;
+      clearResume_();
+      return;
+    }
+
+    // Show credentials
+    nav("scrDone", true);
+    document.getElementById("doneTitle").textContent = "✅ Access Granted 🎉";
+    document.getElementById("doneMsg").textContent = "Your details are shown below. We also sent confirmation on email.";
+
+    const access = (r.access || {});
+    document.getElementById("accUser").textContent = access.user || "-";
+    document.getElementById("accPass").textContent = access.pass || "-";
+    document.getElementById("accessBox").style.display = "block";
+
+    const isNetflix = String(STATE.service || "").toLowerCase().includes("netflix");
+    if(isNetflix && (access.profileNumber || access.profileName || access.profilePin)){
+      document.getElementById("netflixExtras").style.display = "block";
+      document.getElementById("accProfile").textContent =
+        (access.profileName ? access.profileName : "Profile") +
+        (access.profileNumber ? ` (P${access.profileNumber})` : "");
+      document.getElementById("accPin").textContent = access.profilePin || "-";
+    } else {
+      document.getElementById("netflixExtras").style.display = "none";
+    }
+
+    // Clear resume + cleanup
+    clearResume_();
+    STATE._verifyResult = null;
+  }
+  
+
+  // ---------------- Boot ----------------
+  silentBootstrap();
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+function debugSettings() {
+  const out = {
+    sheetId: SpreadsheetApp.getActiveSpreadsheet().getId(),
+    sheetName: SpreadsheetApp.getActiveSpreadsheet().getName(),
+    effectiveUser: Session.getEffectiveUser().getEmail(),
+    UPI_VPA: getSetting_("UPI_VPA","(missing)"),
+    UPI_PAYEE_NAME: getSetting_("UPI_PAYEE_NAME","(missing)"),
+  };
+
+  Logger.log(JSON.stringify(out, null, 2)); // also logs it
+  return out;
+}
+
